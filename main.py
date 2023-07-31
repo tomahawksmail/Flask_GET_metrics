@@ -59,7 +59,6 @@ def show():
                 result = sql.fetchall()
 
                 exportlist = []
-
                 for item in result:
                     listval = (list(item.values()))
                     exportlist.append(listval)
