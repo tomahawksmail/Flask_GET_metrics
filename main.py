@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file, render_template
+from flask import Flask, request, jsonify, send_file, render_template, flash, redirect, session
 from datetime import datetime
 import pymysql.cursors
 import creds
@@ -30,9 +30,30 @@ def root():
                 </body>
                 </html>"""
 
+@app.route("/logout", methods=['POST', 'GET'])
+def logout():
+    return """<!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                      <meta charset="UTF-8">
+                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    </head>
+                    <body>
+                      <div class="text-container">
+                        <marquee behavior="alternate" direction="left" scrollamount="39">
+                          <h1 style="font-size: 72px;">You don't have the rights</h1>
+                        </marquee>
+                      </div>
+                    </body>
+                    </html>"""
 
 @app.route('/getcsv', methods=['POST', 'GET'])
 def show():
+    version = creds.version
+    remote_IP = request.environ['REMOTE_ADDR']
+    if remote_IP not in creds.whiteIP:
+        return redirect("/logout")
+
     sql = connection.cursor()
     if request.method == 'GET':
         sql.execute("""SELECT * FROM (SELECT * FROM new_events  ORDER BY evid DESC LIMIT 15)Var1
@@ -43,7 +64,7 @@ def show():
             listval = (list(item.values()))
             exportlist.append(listval)
 
-        return render_template('export.html', exportlist=exportlist)
+        return render_template('export.html', exportlist=exportlist, version=version)
 
     elif request.method == 'POST':
         start = request.form['date_start'] if request.form['date_start'] else None
@@ -51,34 +72,29 @@ def show():
         if "apply" in request.form:
             if start is None or end is None:
                 exportlist = []
-
-                return render_template('export.html', exportlist=exportlist)
+                return render_template('export.html', exportlist=exportlist, version=version)
             else:
                 sql.execute("""SELECT * FROM new_events WHERE 
                             stamp BETWEEN TIMESTAMP(%s) AND DATE_ADD(TIMESTAMP(%s), INTERVAL 1 DAY)""", (start, end))
                 result = sql.fetchall()
-
                 exportlist = []
                 for item in result:
                     listval = (list(item.values()))
                     exportlist.append(listval)
-                return render_template('export.html', start=start, exportlist=exportlist)
+                field_names = ['evid', 'host', 'ipaddr', 'user', 'action', 'stamp']
+                with open('./csv/Export.csv', 'w') as csvfile:
+                    writer = csv.DictWriter(csvfile, fieldnames=field_names)
+                    writer.writeheader()
+                    writer.writerows(result)
+                return render_template('export.html', start=start, exportlist=exportlist, version=version)
         if "getcsv" in request.form:
-            sql.execute("""SELECT * FROM new_events""")
-            result = sql.fetchall()
-            field_names = ['evid', 'host', 'ipaddr', 'user', 'action', 'stamp']
-            with open('./csv/Export.csv', 'w') as csvfile:
-                writer = csv.DictWriter(csvfile, fieldnames=field_names)
-                writer.writeheader()
-                writer.writerows(result)
             return send_file(
                 './csv/Export.csv',
                 mimetype='text/csv',
                 download_name='Export.csv',
-                as_attachment=True
-            )
+                as_attachment=True)
 
-
+# add event from script to DB
 @app.route('/sendmetrics', methods=['GET'])
 def search():
     args = request.args.to_dict(flat=False)

@@ -13,9 +13,7 @@
         }
 
         table {
-
             border-collapse: collapse;
-
             width: 98%;
             margin: 25px auto;
             background-color: #424242;
@@ -23,7 +21,6 @@
         }
 
         th, td {
-
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #0c7b8a;
@@ -36,7 +33,8 @@
         tr:hover {
             background-color: #0c7b8a;
         }
-
+        tr:nth-child(even) {
+        background-color: #4f4f4f;}
         input {
         border-radius: 10px;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
@@ -47,12 +45,13 @@
               border: none;
               font-size: 20px;
               color: white;
-              padding: 15px 25px;
-              width: 25em;
+              padding: 10px 15px;
+              width: 15em;
               text-decoration: none;
               margin: 4px 2px;
               cursor: pointer;
         }
+
 
 
 
@@ -71,16 +70,16 @@
                 <img src="/csv/logo.png">
             </th>
             <th>
-                <h1 style="margin-left:20px;">Work sheet log</h1>
-            </th>
+                <h1 style="margin-left:20px;">Work sheet log {{ version }}</h1><br>
+
+             </th>
             <th>
                 <label style="margin-left:20px;" for="date_start">Start date:</label>
-                <input type="date" id="date_start" name="date_start" style="height:30px;">
-                <label style="margin-left:20px;" for="date_end">Start date:</label>
-                <input type="date" id="date_end" name="date_end" style="height:30px">
-            </th>
+                <input type="date" id="date_start" name="date_start" style="font-size: 2rem">
+ </th>
             <th>
-
+                <label style="margin-left:20px;" for="date_end">End date:</label>
+                <input type="date" id="date_end" name="date_end" style="font-size: 2rem">
             </th>
             <th>
                 <input type="submit" value="Apply" name="apply">
