@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file, render_template, flash, redirect, session
+from flask import Flask, request, send_file, render_template, redirect, session
 from datetime import datetime
 import pymysql.cursors
 import creds
@@ -49,8 +49,10 @@ def logout():
 
 @app.route('/getcsv', methods=['POST', 'GET'])
 def show():
+
     version = creds.version
     remote_IP = request.environ['REMOTE_ADDR']
+    print(remote_IP)
     if remote_IP not in creds.whiteIP:
         return redirect("/logout")
 

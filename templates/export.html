@@ -30,11 +30,13 @@
             background-color: #0c7b8a;
         }
 
+
+        tr:nth-child(even) {
+        background-color: #4f4f4f;
+        }
         tr:hover {
             background-color: #0c7b8a;
         }
-        tr:nth-child(even) {
-        background-color: #4f4f4f;}
         input {
         border-radius: 10px;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
@@ -59,6 +61,7 @@
 
 
 
+
     </style>
 </head>
 <body>
@@ -70,13 +73,13 @@
                 <img src="/csv/logo.png">
             </th>
             <th>
-                <h1 style="margin-left:20px;">Work sheet log {{ version }}</h1><br>
+                <h1 style="margin-left:20px;">Work sheet log</h1><br>
 
-             </th>
+            </th>
             <th>
                 <label style="margin-left:20px;" for="date_start">Start date:</label>
                 <input type="date" id="date_start" name="date_start" style="font-size: 2rem">
- </th>
+            </th>
             <th>
                 <label style="margin-left:20px;" for="date_end">End date:</label>
                 <input type="date" id="date_end" name="date_end" style="font-size: 2rem">
@@ -115,9 +118,18 @@
 
                 {% endfor %}
                 </tbody>
+            </table>
+        </table>
 
 
     </section>
 </form>
+<div class="text-container">
+    <marquee behavior="scroll" direction="left" scrollamount="15">
+
+        Work sheet log {{ version }}. Designed by IT support Team. 2023
+
+    </marquee>
+</div>
 </body>
 </html>
