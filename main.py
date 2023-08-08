@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file, render_template, redirect, session
+from flask import Flask, request, send_file, render_template
 from datetime import datetime
 import pymysql.cursors
 import creds
@@ -13,6 +13,9 @@ connection = pymysql.connect(host=creds.host,
                              password=creds.password,
                              database=creds.database,
                              cursorclass=pymysql.cursors.DictCursor)
+
+
+
 
 
 @app.route('/', methods=['GET'])
@@ -33,38 +36,22 @@ def root():
                 </html>"""
 
 
-@app.route("/logout", methods=['POST', 'GET'])
-def logout():
-    return """<!DOCTYPE html>
-                    <html lang="en">
-                    <head>
-                      <meta charset="UTF-8">
-                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    </head>
-                    <body>
-                      <div class="text-container">
-                        <marquee behavior="alternate" direction="left" scrollamount="39">
-                          <h1 style="font-size: 72px;">You don't have the rights</h1>
-                        </marquee>
-                      </div>
-                    </body>
-                    </html>"""
-
-
 @app.route('/getcsv', methods=['POST', 'GET'])
 def show():
     version = creds.version
-    remote_IP = request.environ['REMOTE_ADDR']
-    print(remote_IP)
-    if remote_IP not in creds.whiteIP:
-        return redirect("/logout")
-
-    sql = connection.cursor()
+    exportlist = []
     if request.method == 'GET':
-        sql.execute("""SELECT * FROM (SELECT * FROM new_events  ORDER BY evid DESC LIMIT 15)Var1
-                        ORDER BY evid ASC""")
-        result = sql.fetchall()
-        exportlist = []
+        SQLrequest = """SELECT * FROM (SELECT * FROM new_events  ORDER BY evid DESC LIMIT 15)Var1
+                                ORDER BY evid ASC"""
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(SQLrequest)
+                result = cursor.fetchall()
+        except Exception as E:
+            exportlist = []
+            return render_template('export.html', exportlist=exportlist, version=version)
+
+
         for item in result:
             listval = (list(item.values()))
             exportlist.append(listval)
@@ -79,19 +66,26 @@ def show():
                 exportlist = []
                 return render_template('export.html', exportlist=exportlist, version=version)
             else:
-                sql.execute("""SELECT * FROM new_events WHERE 
-                            stamp BETWEEN TIMESTAMP(%s) AND DATE_ADD(TIMESTAMP(%s), INTERVAL 1 DAY)""", (start, end))
-                result = sql.fetchall()
-                exportlist = []
+                SQLrequest = """SELECT * FROM new_events WHERE 
+                            stamp BETWEEN TIMESTAMP(%s) AND DATE_ADD(TIMESTAMP(%s), INTERVAL 1 DAY)"""
+                try:
+                    with connection.cursor() as cursor:
+                        cursor.execute(SQLrequest, (start, end))
+                    result = cursor.fetchall()
+                except Exception as E:
+                    exportlist = []
+                    return render_template('export.html', exportlist=exportlist, version=version)
+
                 for item in result:
                     listval = (list(item.values()))
                     exportlist.append(listval)
+
                 field_names = ['evid', 'host', 'ipaddr', 'user', 'action', 'stamp']
-                with open('./csv/Export.csv', 'w') as csvfile:
+                with open('./csv/Export.csv', 'w', newline='') as csvfile:
                     writer = csv.DictWriter(csvfile, fieldnames=field_names)
                     writer.writeheader()
                     writer.writerows(result)
-                return render_template('export.html', start=start, exportlist=exportlist, version=version)
+                return render_template('export.html', exportlist=exportlist, version=version)
         if "getcsv" in request.form:
             return send_file(
                 './csv/Export.csv',
@@ -116,11 +110,13 @@ def search():
             file.writelines(res)
 
     event = args.get("event")[0]
-    sql = connection.cursor()
+
+    SQLrequest = """INSERT INTO new_events (host, ipaddr, user, action, stamp) VALUES (%s, %s, %s, %s, %s)"""
     try:
-        sql.execute("""INSERT INTO new_events (host, ipaddr, user, action, stamp) VALUES (%s, %s, %s, %s, %s)""",
-                    (host, ipaddr, name, event, tm))
+        with connection.cursor() as cursor:
+            cursor.execute(SQLrequest, (host, ipaddr, name, event, tm))
         connection.commit()
+
     except Exception as E:
         with open("Errlog.txt", "w") as file:
             res = host + ' ' + name + ' ' + str(datetime.now()) + ' - ' + str(E)
@@ -129,4 +125,4 @@ def search():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+    app.run(debug=False)
