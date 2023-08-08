@@ -3,9 +3,11 @@ from datetime import datetime
 import pymysql.cursors
 import creds
 import csv
+from logging import FileHandler, WARNING
 
 app = Flask(__name__, static_folder='csv')
-
+file_handler = FileHandler('errorlog.txt')
+file_handler.setLevel(WARNING)
 connection = pymysql.connect(host=creds.host,
                              user=creds.user,
                              password=creds.password,
@@ -30,6 +32,7 @@ def root():
                 </body>
                 </html>"""
 
+
 @app.route("/logout", methods=['POST', 'GET'])
 def logout():
     return """<!DOCTYPE html>
@@ -47,9 +50,9 @@ def logout():
                     </body>
                     </html>"""
 
+
 @app.route('/getcsv', methods=['POST', 'GET'])
 def show():
-
     version = creds.version
     remote_IP = request.environ['REMOTE_ADDR']
     print(remote_IP)
@@ -96,6 +99,7 @@ def show():
                 download_name='Export.csv',
                 as_attachment=True)
 
+
 # add event from script to DB
 @app.route('/sendmetrics', methods=['GET'])
 def search():
@@ -122,8 +126,6 @@ def search():
             res = host + ' ' + name + ' ' + str(datetime.now()) + ' - ' + str(E)
             file.writelines(res)
     return args
-
-
 
 
 if __name__ == '__main__':
